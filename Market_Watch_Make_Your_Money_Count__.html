@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market Watch: Make Your Money Count!</title>
+<style>
+:root{--ink:#172033;--muted:#64748b;--line:#e2e8f0;--bg:#f4f7fb;--blue:#1d4ed8;--green:#15803d;--red:#b91c1c}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 40px}
+header{background:#14213d;color:white;padding:24px;border-radius:18px;margin-bottom:18px}
+h1{margin:0 0 8px;font-size:clamp(1.5rem,4vw,2.2rem)} header p{margin:0;color:#dbeafe;line-height:1.5}
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.metric{background:white;border:1px solid var(--line);border-radius:14px;padding:16px}
+.metric label{display:block;color:var(--muted);font-size:.85rem;margin-bottom:8px}
+.metric strong{font-size:1.45rem} input[type=number], input[type=text], select{font:inherit;border:1px solid #cbd5e1;border-radius:8px;padding:8px;width:100%;min-width:90px}
+.item-edit{min-width:150px} .notes-edit{min-width:170px} .addpanel{display:flex;gap:8px;flex-wrap:wrap;background:white;border:1px solid var(--line);padding:14px;border-radius:12px;margin:14px 0}
+.addpanel input,.addpanel select{flex:1 1 140px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:16px 0}
+button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}
+.reset{background:#e2e8f0;color:#172033} .selectall{background:var(--blue);color:white}
+.tablewrap{overflow-x:auto;background:white;border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:700px} th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left}
+th{background:#eef2ff;color:#334155;font-size:.85rem} tr:last-child td{border-bottom:0}
+td.amount{width:130px} td.action{width:130px} .buybtn{width:100%;background:#e2e8f0;color:#334155;transition:.15s}
+.buybtn[aria-pressed=true]{background:#dcfce7;color:#166534;outline:2px solid #86efac}
+tr.purchased{background:#f0fdf4} tr.purchased .itemname{font-weight:700}
+.tag{display:inline-block;border-radius:999px;padding:4px 8px;font-size:.78rem;background:#f1f5f9;color:#475569}
+.note{color:var(--muted);font-size:.9rem;line-height:1.5;margin-top:14px}
+.balance.negative strong{color:var(--red)} .balance.positive strong{color:var(--green)}
+.reflection{margin-top:24px;background:white;border:1px solid var(--line);border-radius:14px;padding:18px}
+.reflection h2{margin-top:0} .question{margin:14px 0} .question label{display:block;font-weight:700;margin-bottom:6px} textarea{width:100%;min-height:65px;border:1px solid #cbd5e1;border-radius:8px;padding:10px;font:inherit;resize:vertical}
+@media(max-width:600px){.summary{grid-template-columns:1fr} main{padding:12px} header{padding:18px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Market Watch: Make Your Money Count!</h1>
+<p>Choose what you buy, adjust prices, and watch your monthly balance update. Click a purchase again to undo it if you change your mind.</p>
+</header>
+<section class="summary">
+<div class="metric"><label for="income">Starting monthly income ($)</label><input id="income" type="number" min="0" step="50" value="2500"></div>
+<div class="metric"><label>Total selected purchases</label><strong id="spent">$0.00</strong></div>
+<div class="metric balance positive" id="balanceCard"><label>Money remaining</label><strong id="balance">$2,500.00</strong></div>
+</section>
+<div class="addpanel" aria-label="Add a purchase">
+  <input id="newName" type="text" placeholder="New item name" aria-label="New item name">
+  <select id="newCategory" aria-label="New item category"><option>Need</option><option>Want</option><option>Other</option><option>Both</option><option>Surprise</option><option>Savings</option></select>
+  <input id="newCost" type="number" min="0" step="1" value="0" aria-label="New item price" placeholder="Price">
+  <input id="newNotes" type="text" placeholder="Description / notes" aria-label="New item notes">
+  <button class="selectall" id="addItem">Add purchase</button>
+</div>
+<div class="toolbar">
+<div><strong id="count">0</strong> purchases selected</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="selectall" id="selectAll">Select all</button><button class="reset" id="reset">Reset choices</button></div>
+</div>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Item</th><th>Category</th><th>Cost ($) — editable</th><th>Notes</th><th>Purchase?</th></tr></thead>
+<tbody id="items"></tbody>
+</table>
+</div>
+<p class="note">How to use: Edit item names, categories, prices, and notes directly in the table. Click <b>Buy</b> to select an item or <b>Undo</b> to remove it from your budget. Add your own purchases above. Changes are saved in this browser on this device.</p>
+<section class="reflection">
+<h2>Month-End Reflection</h2>
+<div class="question"><label for="q1">1. How much money did you have left at the end of the month?</label><textarea id="q1"></textarea></div>
+<div class="question"><label for="q2">2. Which expenses were needs? Name two.</label><textarea id="q2"></textarea></div>
+<div class="question"><label for="q3">3. Which wants did you choose to purchase? Why?</label><textarea id="q3"></textarea></div>
+<div class="question"><label for="q4">4. Identify one want you skipped. What was the opportunity cost of buying it?</label><textarea id="q4"></textarea></div>
+<div class="question"><label for="q5">5. How did the unexpected expense affect your budget?</label><textarea id="q5"></textarea></div>
+<div class="question"><label for="q6">6. If you ran out of money, what would you change next month?</label><textarea id="q6"></textarea></div>
+<button class="reset" id="clearReflection">Clear reflection answers</button>
+</section>
+</main>
+<script>
+const originalItems = [{"name": "Rent / housing", "category": "Need", "cost": 650.0, "notes": "Required expense"}, {"name": "Car Note", "category": "Need", "cost": 310.0, "notes": "Required expense"}, {"name": "Electric bill", "category": "Need", "cost": 120.0, "notes": "Required expense"}, {"name": "Water bill", "category": "Need", "cost": 50.0, "notes": "Required expense"}, {"name": "Door Dash", "category": "want", "cost": 125.0, "notes": ""}, {"name": "Groceries", "category": "Need", "cost": 250.0, "notes": "Required expense"}, {"name": "Phone bill", "category": "Need", "cost": 80.0, "notes": "Required expense"}, {"name": "Internet", "category": "Want/Need", "cost": 65.0, "notes": "optional purchase"}, {"name": "Gas", "category": "Need", "cost": 100.0, "notes": "Required expense"}, {"name": "Hair cut (Men)", "category": "Both", "cost": 25.0, "notes": ""}, {"name": "Hair done (Women)", "category": "Both", "cost": 100.0, "notes": ""}, {"name": "Nails/Feet", "category": "Want", "cost": 100.0, "notes": ""}, {"name": "Medicine / personal care", "category": "Need", "cost": 40.0, "notes": "Required expense"}, {"name": "New video game", "category": "Want", "cost": 70.0, "notes": "Optional purchase"}, {"name": "Fast food", "category": "Want", "cost": 45.0, "notes": "Optional purchase"}, {"name": "Streaming subscriptions", "category": "Want", "cost": 120.0, "notes": "Optional purchase"}, {"name": "Clothes", "category": "Need", "cost": 200.0, "notes": ""}, {"name": "New sneakers", "category": "Want", "cost": 90.0, "notes": "Optional purchase"}, {"name": "Movie tickets", "category": "Want", "cost": 35.0, "notes": "Optional purchase"}, {"name": "Gym membership", "category": "Both", "cost": 25.0, "notes": "Optional purchase"}, {"name": "Coffee / snack", "category": "Want", "cost": 15.0, "notes": "Optional purchase"}, {"name": "Concert / event", "category": "Want", "cost": 60.0, "notes": "Optional purchase"}, {"name": "Apple Music", "category": "Want", "cost": 19.0, "notes": ""}, {"name": "Online Shopping (accesories)", "category": "Want", "cost": 85.0, "notes": ""}, {"name": "Personal care / hygiene", "category": "Need", "cost": 35.0, "notes": ""}, {"name": "Beauty products", "category": "Both", "cost": 75.0, "notes": "Optional purchase"}, {"name": "Decor / accessories", "category": "Want", "cost": 30.0, "notes": "Optional purchase"}, {"name": "Unexpected car repair", "category": "Surprise", "cost": 150.0, "notes": "Unexpected expense"}, {"name": "School / work supplies", "category": "Need", "cost": 35.0, "notes": ""}, {"name": "Savings", "category": "Savings", "cost": 100.0, "notes": "Money set aside for future needs or emergencies"}];
+let items = originalItems.map((x,i)=>({...x,id:i,buy:false}));
+const $ = id => document.getElementById(id);
+function money(n) { return n.toLocaleString('en-US',{style:'currency',currency:'USD'}); }
+function save() {
+ try { localStorage.setItem('marketWatchBudget',JSON.stringify({income:$('income').value,items,reflection:[...document.querySelectorAll('.reflection textarea')].map(x=>x.value)})); } catch(e) {}
+}
+function render() {
+ $('items').innerHTML = items.map((it,i)=>`
+ <tr class="${it.buy?'purchased':''}">
+ <td><input class="item-edit" type="text" aria-label="Item name" value="${escapeHtml(it.name)}" data-name="${i}"></td>
+ <td><select aria-label="Category" data-category="${i}">${['Need','Want','Both','Other','Surprise','Savings','Want/Need'].map(c=>`<option ${it.category===c?'selected':''}>${c}</option>`).join('')}</select></td>
+ <td class="amount"><input aria-label="Cost" type="number" min="0" step="1" value="${it.cost}" data-cost="${i}"></td>
+ <td><input class="notes-edit" type="text" aria-label="Description or notes" value="${escapeHtml(it.notes)}" data-notes="${i}"></td>
+ <td class="action"><button class="buybtn" data-buy="${i}" aria-pressed="${it.buy}">${it.buy?'Undo':'Buy'}</button></td>
+ </tr>`).join('');
+ document.querySelectorAll('[data-buy]').forEach(b=>b.addEventListener('click',()=>{items[+b.dataset.buy].buy=!items[+b.dataset.buy].buy;render();save();}));
+ document.querySelectorAll('[data-cost]').forEach(inp=>inp.addEventListener('input',()=>{items[+inp.dataset.cost].cost=Math.max(0,Number(inp.value)||0);updateTotals();save();}));
+ document.querySelectorAll('[data-name]').forEach(inp=>inp.addEventListener('input',()=>{items[+inp.dataset.name].name=inp.value;save();}));
+ document.querySelectorAll('[data-category]').forEach(inp=>inp.addEventListener('change',()=>{items[+inp.dataset.category].category=inp.value;save();}));
+ document.querySelectorAll('[data-notes]').forEach(inp=>inp.addEventListener('input',()=>{items[+inp.dataset.notes].notes=inp.value;save();}));
+ updateTotals();
+}
+function updateTotals() {
+ const spent=items.reduce((sum,it)=>sum+(it.buy?it.cost:0),0), income=Math.max(0,Number($('income').value)||0), balance=income-spent;
+ $('spent').textContent=money(spent); $('balance').textContent=money(balance);
+ $('count').textContent=items.filter(it=>it.buy).length;
+ $('balanceCard').className='metric balance '+(balance<0?'negative':'positive');
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+$('income').addEventListener('input',()=>{updateTotals();save();});
+$('addItem').addEventListener('click',()=>{
+ const name=$('newName').value.trim();
+ if(!name){$('newName').focus();return;}
+ items.push({id:Date.now(),name,category:$('newCategory').value,cost:Math.max(0,Number($('newCost').value)||0),notes:$('newNotes').value.trim(),buy:false});
+ $('newName').value='';$('newCost').value='0';$('newNotes').value='';
+ render();save();
+});
+$('selectAll').addEventListener('click',()=>{const all=items.every(it=>it.buy);items.forEach(it=>it.buy=!all);render();save();});
+$('reset').addEventListener('click',()=>{items.forEach(it=>it.buy=false);render();save();});
+$('clearReflection').addEventListener('click',()=>{document.querySelectorAll('.reflection textarea').forEach(x=>x.value='');save();});
+function restore() {
+ try {const raw=localStorage.getItem('marketWatchBudget');if(!raw)return;const s=JSON.parse(raw);if(Array.isArray(s.items)&&s.items.length)items=s.items;if(s.income!==undefined)$('income').value=s.income;if(s.reflection)document.querySelectorAll('.reflection textarea').forEach((x,i)=>x.value=s.reflection[i]||'');} catch(e) {}
+}
+restore();render();
+</script>
+</body>
+</html>
